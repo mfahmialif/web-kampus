@@ -166,7 +166,8 @@ Setelah semua jawaban diterima:
 
 Sebelum memulai development backend Laravel, jalankan terlebih dahulu:
 
-install dependensi frontend (vue) dan backend (laravel 13)
+buatkan .env backend berdasarkan .env.example dan .env.production berdasarkan .env.production.example, tapi kalau sudan .env dan .env.production, jangan dibuat ulang
+install dependensi jika belum diisintall frontend (vue) dan backend (laravel 13), tapi kalau sudah, jangan diinstall
 
 ```bash
 
