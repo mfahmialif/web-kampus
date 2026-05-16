@@ -166,6 +166,8 @@ Setelah semua jawaban diterima:
 
 Sebelum memulai development backend Laravel, jalankan terlebih dahulu:
 
+install dependensi frontend (vue) dan backend (laravel 13)
+
 ```bash
 
 php artisan key:generate
