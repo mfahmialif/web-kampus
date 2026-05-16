@@ -1,0 +1,29 @@
+<template>
+  <Transition name="preloader">
+    <div v-if="show" class="public-preloader fixed inset-0 z-[100] flex items-center justify-center">
+      <div class="editorial-loader">
+        <div class="loader-orbit">
+          <div class="loader-core">
+            <span class="material-symbols-outlined text-[34px]">auto_stories</span>
+          </div>
+        </div>
+        <div class="text-center">
+          <p class="loader-title">Sastra Arab</p>
+          <p class="loader-subtitle">Informasi akademik prodi</p>
+        </div>
+        <div class="loader-line">
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </Transition>
+</template>
+
+<script setup>
+defineProps({
+  show: {
+    type: Boolean,
+    default: false,
+  },
+})
+</script>

@@ -1,0 +1,262 @@
+<template>
+  <main class="news-detail-page pt-28">
+    <section v-if="loading" class="mx-auto max-w-5xl px-5 py-24 text-center lg:px-8">
+      <div class="mx-auto size-16 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600"></div>
+      <p class="mt-5 font-bold text-slate-500">Memuat news...</p>
+    </section>
+
+      <section v-else-if="error" class="mx-auto max-w-3xl px-5 py-24 text-center lg:px-8">
+        <span class="material-symbols-outlined text-[64px] text-red-500">error</span>
+        <h1 class="mt-4 text-3xl font-black text-[#101418]">News tidak ditemukan</h1>
+        <p class="mt-3 text-slate-600">{{ error }}</p>
+        <router-link to="/news" class="cta-primary mt-7">
+          Kembali ke News
+          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </router-link>
+      </section>
+
+      <template v-else-if="newsItem">
+        <article class="article-detail">
+          <header class="article-detail-hero" data-aos="fade-up">
+            <div class="mx-auto max-w-6xl px-5 lg:px-8">
+              <router-link to="/news" class="article-back-link">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Kembali ke News
+              </router-link>
+
+              <div class="article-hero-grid">
+                <div>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <span v-for="category in categoryList(newsItem)" :key="category.id || category.name" class="news-badge" :class="categoryClass(category.type)">
+                      {{ category.name }}
+                    </span>
+                    <span class="article-reading-pill">
+                      <span class="material-symbols-outlined text-[17px]">schedule</span>
+                      {{ formatRelative(newsItem.created_at) }}
+                    </span>
+                  </div>
+                  <h1 class="article-title" :class="titleSizeClass">
+                    {{ newsItem.title }}
+                  </h1>
+                </div>
+
+                <div class="article-intro">
+                  <p class="article-kicker">Sastra Arab</p>
+                  <p>{{ newsItem.excerpt }}</p>
+                  <div class="article-meta-line">
+                    <span class="inline-flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+                      {{ formatDate(newsItem.created_at, { weekday: 'long' }) }}
+                    </span>
+                    <span class="inline-flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[18px]">edit</span>
+                      {{ newsItem.authorName }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <figure class="mx-auto max-w-6xl px-5 lg:px-8" data-aos="zoom-in">
+            <div class="detail-media article-featured-media">
+              <video v-if="newsItem.categoryType === 'Video' && newsItem.video" :src="newsItem.video" controls class="h-full w-full object-cover"></video>
+              <img v-else :src="newsItem.image" :alt="newsItem.title" class="h-full w-full object-cover" />
+            </div>
+            <figcaption class="article-media-caption">
+              <span>{{ categoryNames(newsItem) }}</span>
+              <span>{{ formatDate(newsItem.created_at) }}</span>
+            </figcaption>
+          </figure>
+
+          <div class="article-content-wrap">
+            <article class="article-body article-body--story" data-aos="fade-up">
+              <div class="article-body-meta">
+                <span>Artikel</span>
+                <span>{{ categoryNames(newsItem) }}</span>
+              </div>
+              <div v-if="newsItem.bodyHtml" v-html="newsItem.bodyHtml"></div>
+              <p v-else>Konten news belum tersedia.</p>
+            </article>
+
+            <aside class="detail-sidebar article-sidebar" data-aos="fade-left">
+              <div class="sidebar-card">
+                <p class="text-xs font-black uppercase tracking-[0.18em] text-sky-700">Info Artikel</p>
+                <dl class="article-info-list">
+                  <div>
+                    <dt>Penulis</dt>
+                    <dd>{{ newsItem.authorName }}</dd>
+                  </div>
+                  <div>
+                    <dt>Kategori</dt>
+                    <dd>
+                      <span v-for="category in categoryList(newsItem)" :key="category.id || category.name" class="news-badge mr-1.5 mt-1" :class="categoryClass(category.type)">
+                        {{ category.name }}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Diterbitkan</dt>
+                    <dd>{{ formatDate(newsItem.created_at) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Format</dt>
+                    <dd>{{ newsItem.categoryType === 'Video' ? 'Video' : 'Artikel' }}</dd>
+                  </div>
+                </dl>
+              </div>
+              <div class="sidebar-card">
+                <p class="text-xs font-black uppercase tracking-[0.18em] text-sky-700">Bagikan</p>
+                <div class="mt-4 grid gap-2">
+                  <button @click="copyLink" class="share-button" type="button">
+                    <span class="material-symbols-outlined text-[19px]">link</span>
+                    {{ copied ? 'Link tersalin' : 'Salin link' }}
+                  </button>
+                  <a :href="`https://wa.me/?text=${encodedShareText}`" target="_blank" rel="noopener" class="share-button">
+                    <span class="material-symbols-outlined text-[19px]">chat</span>
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </article>
+
+        <section v-if="relatedNews.length" class="article-related-section py-16">
+          <div class="mx-auto max-w-6xl px-5 lg:px-8">
+            <div class="mb-8 flex items-end justify-between gap-5">
+              <div>
+                <p class="news-kicker compact">
+                  <span class="size-2.5 rounded-full bg-sky-600"></span>
+                  Baca juga
+                </p>
+                <h2 class="mt-3 text-3xl font-black text-[#101418]">News terkait</h2>
+              </div>
+              <router-link to="/news" class="text-sm font-black text-sky-700">Semua News</router-link>
+            </div>
+            <div class="grid gap-5 md:grid-cols-3">
+              <article v-for="item in relatedNews" :key="item.id" class="news-card group" @click="openDetail(item)">
+                <div class="relative h-40 overflow-hidden rounded-[1.25rem]">
+                  <img :src="item.image" :alt="item.title" class="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+                </div>
+                <div class="p-5">
+                  <div class="flex flex-wrap gap-1.5">
+                    <span v-for="category in categoryList(item)" :key="category.id || category.name" class="news-badge" :class="categoryClass(category.type)">
+                      {{ category.name }}
+                    </span>
+                  </div>
+                  <h3 class="mt-3 line-clamp-2 text-lg font-black text-[#101418]">{{ item.title }}</h3>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="article-comments-section py-16">
+          <div class="mx-auto max-w-5xl px-5 lg:px-8">
+            <Comments :news-id="newsItem.id" />
+          </div>
+        </section>
+      </template>
+  </main>
+</template>
+
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import AOS from 'aos'
+import 'aos/dist/aos.css'
+import './styles.css'
+import api from '../../../axios'
+import Comments from './_Comments.vue'
+import { categoryClass, formatDate, formatRelative, normalizeNews } from './utils'
+
+const route = useRoute()
+const router = useRouter()
+const loading = ref(true)
+const error = ref('')
+const newsItem = ref(null)
+const relatedNews = ref([])
+const copied = ref(false)
+
+const encodedShareText = computed(() => encodeURIComponent(`${newsItem.value?.title || 'Sastra Arab News'} ${window.location.href}`))
+const titleSizeClass = computed(() => {
+  const length = newsItem.value?.title?.length || 0
+  if (length > 95) return 'article-title--long'
+  if (length > 68) return 'article-title--medium'
+  return ''
+})
+
+async function loadDetail() {
+  loading.value = true
+  error.value = ''
+  copied.value = false
+
+  try {
+    const { data } = await api.get(`/news/${route.params.id}`)
+    newsItem.value = normalizeNews(data.data || data)
+    await loadRelated()
+  } catch (err) {
+    console.error(err)
+    error.value = err.response?.status === 404
+      ? 'News tidak ditemukan atau sudah dihapus.'
+      : 'Terjadi kesalahan saat memuat news.'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function loadRelated() {
+  try {
+    const { data } = await api.get('/news', {
+      params: {
+        per_page: 4,
+        status: 'Published',
+        category: newsItem.value?.category?.slug,
+        sort_by: 'created_at',
+        sort_dir: 'desc',
+      },
+    })
+    relatedNews.value = (data.data || [])
+      .filter((item) => String(item.id) !== String(newsItem.value?.id))
+      .slice(0, 3)
+      .map(normalizeNews)
+  } catch {
+    relatedNews.value = []
+  }
+}
+
+async function copyLink() {
+  try {
+    await navigator.clipboard.writeText(window.location.href)
+    copied.value = true
+    window.setTimeout(() => {
+      copied.value = false
+    }, 1800)
+  } catch {
+    copied.value = false
+  }
+}
+
+function openDetail(item) {
+  router.push({ name: 'DetailNews', params: { id: item.slug || item.id } })
+}
+
+function categoryList(item) {
+  return item?.categories?.length ? item.categories : (item?.category ? [item.category] : [])
+}
+
+function categoryNames(item) {
+  return categoryList(item).map((category) => category.name).join(', ') || item?.categoryName || 'Artikel'
+}
+
+onMounted(() => {
+  AOS.init({ duration: 780, easing: 'ease-out-cubic', once: true, offset: 80 })
+  loadDetail()
+})
+
+watch(() => route.params.id, () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  loadDetail()
+})
+</script>
